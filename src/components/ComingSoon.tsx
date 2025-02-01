@@ -11,25 +11,28 @@ export default function ComingSoon() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      if (password === BETA_PASSWORD) {
-        // Store beta access in session storage
-        sessionStorage.setItem('betaAccess', 'true');
-        navigate('/');
-      } else {
-        setError('Invalid beta access code');
-      }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-    } finally {
-      setLoading(false);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  console.log('Form submitted with password:', password);
+  setError('');
+  setLoading(true);
+console.log('Form submitted with password:', password);
+  try {
+    if (password === BETA_PASSWORD) {
+      // Store beta access in session storage
+      sessionStorage.setItem('betaAccess', 'true');
+      
+      // Refresh the page
+      window.location.reload();
+    } else {
+      setError('Invalid beta access code');
     }
-  };
+  } catch (err) {
+    setError('An error occurred. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className={`min-h-screen flex flex-col ${

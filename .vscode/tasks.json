@@ -9,7 +9,7 @@
         {
             "label": "start-dev-server",
             "type": "shell",
-            "command": "/usr/bin/flatpak-spawn --host /usr/bin/konsole --hold -e '/bin/bash -c \"export PATH=/home/deck/.var/app/com.visualstudio.code/config/nvm/versions/node/v23.7.0/bin:$PATH && cd /home/deck/Downloads/project && npm run dev\"'",
+            "command": "/usr/bin/flatpak-spawn --host /usr/bin/konsole --hold -e '/bin/bash -c \"export PATH=/home/deck/.var/app/com.visualstudio.code/config/nvm/versions/node/v23.7.0/bin:$PATH && cd /home/deck/git/neuro2 && npm run dev\"'",
             "isBackground": true,
             "problemMatcher": {
                 "pattern": {
