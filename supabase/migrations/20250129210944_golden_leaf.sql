@@ -1,0 +1,1 @@
+-- This migration has been removed as part of content management system cleanup

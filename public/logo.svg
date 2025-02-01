@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Brain circuit background -->
+  <path d="M256 64C149.961 64 64 149.961 64 256C64 362.039 149.961 448 256 448C362.039 448 448 362.039 448 256C448 149.961 362.039 64 256 64ZM256 416C167.635 416 96 344.365 96 256C96 167.635 167.635 96 256 96C344.365 96 416 167.635 416 256C416 344.365 344.365 416 256 416Z" fill="#4F46E5"/>
+  
+  <!-- Code brackets -->
+  <path d="M213.333 170.667L128 256L213.333 341.333" stroke="#4F46E5" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M298.667 170.667L384 256L298.667 341.333" stroke="#4F46E5" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Neural connections -->
+  <circle cx="256" cy="256" r="24" fill="#4F46E5"/>
+  <circle cx="176" cy="256" r="16" fill="#4F46E5"/>
+  <circle cx="336" cy="256" r="16" fill="#4F46E5"/>
+  <circle cx="256" cy="176" r="16" fill="#4F46E5"/>
+  <circle cx="256" cy="336" r="16" fill="#4F46E5"/>
+  
+  <!-- Connection lines -->
+  <line x1="240" y1="256" x2="192" y2="256" stroke="#4F46E5" stroke-width="4"/>
+  <line x1="272" y1="256" x2="320" y2="256" stroke="#4F46E5" stroke-width="4"/>
+  <line x1="256" y1="240" x2="256" y2="192" stroke="#4F46E5" stroke-width="4"/>
+  <line x1="256" y1="272" x2="256" y2="320" stroke="#4F46E5" stroke-width="4"/>
+</svg>
