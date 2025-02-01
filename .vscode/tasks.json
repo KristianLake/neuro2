@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "start-dev-environment",
+            "dependsOn": ["start-dev-server", "launch-chrome"],
+            "dependsOrder": "parallel"
+        },
+        {
+            "label": "start-dev-server",
+            "type": "shell",
+            "command": "/usr/bin/flatpak-spawn --host /usr/bin/konsole --hold -e '/bin/bash -c \"export PATH=/home/deck/.var/app/com.visualstudio.code/config/nvm/versions/node/v23.7.0/bin:$PATH && cd /home/deck/Downloads/project && npm run dev\"'",
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "VITE.*ready",
+                    "endsPattern": "press h to show help"
+                }
+            }
+        },
+        {
+            "label": "launch-chrome",
+            "type": "shell",
+            "command": "/usr/bin/flatpak-spawn --host /var/lib/flatpak/exports/bin/com.google.Chrome --remote-debugging-port=9229 --no-first-run --no-default-browser-check --user-data-dir=/home/deck/Downloads/chrome-debug --disable-features=SecretStorageService --disable-gpu-driver-bug-workarounds http://localhost:5173",
+            "isBackground": true
+        }
+    ]
+}

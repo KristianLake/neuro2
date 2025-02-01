@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "attach",
+            "name": "Debug NeuroCode on SteamOS",
+            "port": 9229,
+            "webRoot": "${workspaceFolder}",
+            "urlFilter": "http://localhost:5173/*",
+            "preLaunchTask": "start-dev-environment"
+        }
+    ]
+}
