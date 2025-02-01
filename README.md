@@ -1,4 +1,4 @@
-# NeuroCode Learning Platform
+# NeuroCode Learning Platform v1
 
 ## Project Overview
 This repository contains the complete business and course structure for our neurodivergent-friendly web development education platform.
