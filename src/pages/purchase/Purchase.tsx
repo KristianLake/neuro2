@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -17,14 +17,17 @@ import { ErrorDisplay } from './components/ErrorDisplay';
 import { LoadingSpinner } from './components/LoadingSpinner';
 
 export default function Purchase() {
-  const { moduleId } = useParams<{ moduleId: string }>();
+  const { courseId } = useParams<{ courseId: string }>();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
 
-  const isFullCourse = moduleId === 'full-course';
-  const module = !isFullCourse ? PRICING.modules[moduleId as keyof typeof PRICING.modules] : null;
+  // Determine course type from URL path
+  const isFullCourse = location.pathname.startsWith('/purchase/course/');
+  const isMasterclass = location.pathname.startsWith('/purchase/master/');
+  const isMiniCourse = location.pathname.startsWith('/purchase/mini/');
+
   const [selectedPlan, setSelectedPlan] = useState<'standard' | 'premium'>('standard');
   const fullCourse = isFullCourse ? PRICING.fullProgram[selectedPlan] : null;
   const [paymentOption, setPaymentOption] = useState<PaymentOption>('full');
@@ -36,7 +39,7 @@ export default function Purchase() {
     closePaymentModal,
     ownsStandardCourse,
     isUpgrade
-  } = usePurchaseFlow({ moduleId, selectedPlan });
+  } = usePurchaseFlow({ courseId, selectedPlan });
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -45,37 +48,9 @@ export default function Purchase() {
     }
   }, [user, navigate, location]);
 
-  useEffect(() => {
-    if (!isFullCourse && !module) {
-      navigate('/courses');
-    }
-  }, [moduleId, navigate, module]);
-
-  if (!isFullCourse && !module) {
-    return null;
-  }
-
   if (!state.showContent) {
     return <LoadingSpinner />;
   }
-
-  const getPrice = () => {
-    if (state.purchaseCheck) {
-      if (state.purchaseCheck.discount > 0) {
-        return `${state.purchaseCheck.finalPrice} (£${state.purchaseCheck.discount} discount applied)`;
-      }
-      return state.purchaseCheck.finalPrice;
-    }
-    if (isFullCourse) {
-      if (paymentOption === 'full') {
-        return fullCourse!.price;
-      }
-      const plan = selectedPlan === 'premium' ? PRICING.fullProgram.premium : PRICING.fullProgram.standard;
-      const option = plan.monthlyOptions.find(opt => opt.months === paymentOption);
-      return option ? `${option.amount}/month for ${paymentOption} months` : fullCourse!.price;
-    }
-    return module!.price;
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -104,7 +79,9 @@ export default function Purchase() {
         }`}>
           <PurchaseHeader
             isFullCourse={isFullCourse}
-            module={module}
+            isMasterclass={isMasterclass}
+            isMiniCourse={isMiniCourse}
+            courseId={courseId}
             fullCourse={fullCourse}
           />
 
@@ -123,7 +100,7 @@ export default function Purchase() {
             {/* Price Display */}
             <PriceDisplay
               isUpgrade={isUpgrade}
-              price={getPrice()}
+              price={state.purchaseCheck?.finalPrice || (isFullCourse ? fullCourse?.price : 0)}
               purchaseCheck={state.purchaseCheck}
               premiumFeatures={PRICING.fullProgram.premium.features}
             />

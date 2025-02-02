@@ -10,6 +10,7 @@ const COURSES = [
     description: 'Master web development with our structured, neurodivergent-friendly approach. Complete transformation program designed to take you from beginner to job-ready developer.',
     price: 2497,
     type: 'complete',
+    slug: 'web-developer-program',
     features: [
       'Complete course access',
       'Group Q&A sessions',
@@ -24,6 +25,7 @@ const COURSES = [
     description: 'Deep dive into TypeScript design patterns, microservices architecture, and web performance optimization. Perfect for developers looking to level up their architectural skills.',
     price: 447,
     type: 'masterclass',
+    slug: 'architecture-masterclass',
     features: [
       'Advanced TypeScript patterns',
       'Microservices architecture',
@@ -40,26 +42,42 @@ const MINI_COURSES = [
     title: 'Web Basics Bundle',
     description: 'Essential web development fundamentals including HTML, CSS, and basic JavaScript.',
     price: 247,
-    type: 'mini'
+    type: 'mini',
+    slug: 'web-basics'
   },
   {
-    id: 'javascript',
-    title: 'JavaScript Fundamentals',
-    description: 'Master core JavaScript concepts with practical, hands-on exercises.',
+    id: 'mini-typescript',
+    title: 'TypeScript Essentials',
+    description: 'Master core TypeScript concepts with practical, hands-on exercises.',
     price: 397,
-    type: 'mini'
+    type: 'mini',
+    slug: 'typescript-essentials'
   },
   {
-    id: 'react',
+    id: 'mini-react',
     title: 'React Essentials',
     description: 'Build modern web applications with React through project-based learning.',
     price: 597,
-    type: 'mini'
+    type: 'mini',
+    slug: 'react-fundamentals'
   }
 ];
 
 export default function Courses() {
   const { theme } = useTheme();
+
+  const getPurchasePath = (course: typeof COURSES[0] | typeof MINI_COURSES[0]) => {
+    switch (course.type) {
+      case 'complete':
+        return `/purchase/course/${course.id}`;
+      case 'masterclass':
+        return `/purchase/master/${course.id}`;
+      case 'mini':
+        return `/purchase/mini/${course.id}`;
+      default:
+        return `/purchase/${course.id}`;
+    }
+  };
 
   return (
     <PageLayout>
@@ -118,7 +136,7 @@ export default function Courses() {
 
                   <div className="flex items-center justify-between">
                     <Link
-                      to={`/courses/${course.id}`}
+                      to={`/courses/${course.slug}`}
                       className={`px-4 py-2 rounded-md text-sm font-medium ${
                         theme === 'dark'
                           ? 'bg-gray-600 text-white hover:bg-gray-500'
@@ -130,7 +148,7 @@ export default function Courses() {
                       View Course Details →
                     </Link>
                     <Link
-                      to={`/purchase/${course.id}`}
+                      to={getPurchasePath(course)}
                       className={`px-4 py-2 rounded-md text-sm font-semibold ${
                         theme === 'dark'
                           ? 'bg-indigo-600 text-white hover:bg-indigo-500'
@@ -175,7 +193,7 @@ export default function Courses() {
                   </p>
                   <div className="flex items-center justify-between">
                     <Link
-                      to={`/purchase/${course.id}`}
+                      to={`/courses/${course.slug}`}
                       className={`px-4 py-2 rounded-md text-sm font-medium ${
                         theme === 'dark'
                           ? 'bg-gray-600 text-white hover:bg-gray-500'
@@ -187,7 +205,7 @@ export default function Courses() {
                       View Details →
                     </Link>
                     <Link
-                      to={`/purchase/${course.id}`}
+                      to={getPurchasePath(course)}
                       className={`px-4 py-2 rounded-md text-sm font-semibold ${
                         theme === 'dark'
                           ? 'bg-indigo-600 text-white hover:bg-indigo-500'

@@ -1,11 +1,12 @@
 // Course content types
-export interface Course {
+export interface CourseData {
   id: string;
-  slug: string; // URL-friendly identifier
+  slug: string;
   type: 'complete' | 'mini' | 'masterclass';
   title: string;
   description: string;
   price: number;
+  course_path?: string;
   modules: Module[];
   metadata?: {
     targetAudience?: string[];
@@ -20,23 +21,23 @@ export interface Course {
 
 export interface Module {
   id: string;
-  courseId: string; // Reference to parent course
+  courseId: string;
   slug: string;
   title: string;
   description: string;
-  order: number;
+  order_number: number;
   price: number;
   lessons: Lesson[];
 }
 
 export interface Lesson {
   id: string;
-  moduleId: string; // Reference to parent module
-  courseId: string; // Reference to parent course
+  moduleId: string;
+  courseId: string;
   slug: string;
   title: string;
   description: string;
-  order: number;
-  isPremium: boolean;
+  order_number: number;
+  is_premium: boolean;
   path: string;
 }

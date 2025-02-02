@@ -50,7 +50,13 @@ export default function App() {
                     <Route path="/auth/reset-password" element={<ResetPassword />} />
                     <Route path="/terms" element={<TermsOfService />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/purchase/:moduleId" element={<Purchase />} />
+                    
+                    {/* Purchase routes */}
+                    <Route path="/purchase/course/:courseId" element={<Purchase />} />
+                    <Route path="/purchase/master/:courseId" element={<Purchase />} />
+                    <Route path="/purchase/mini/:courseId" element={<Purchase />} />
+                    
+                    {/* Lesson routes */}
                     <Route path="/lessons/introduction" element={<Introduction />} />
                     <Route path="/lessons/variables" element={<Variables />} />
                     <Route path="/learn/comments" element={<Comments />} />
@@ -67,7 +73,7 @@ export default function App() {
                       } 
                     />
 
-                    {/* Admin Routes (Fixed Nested Structure) */}
+                    {/* Admin Routes */}
                     <Route 
                       path="/admin/*" 
                       element={

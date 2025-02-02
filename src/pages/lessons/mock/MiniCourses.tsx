@@ -8,6 +8,7 @@ const MOCK_MINI_COURSES = {
   'mini-typescript': {
     title: 'TypeScript Essentials',
     description: 'Quick start guide to TypeScript fundamentals',
+    path: '/courses/mini-typescript',
     modules: [
       {
         id: 'mini-ts-module-1',
@@ -32,6 +33,7 @@ const MOCK_MINI_COURSES = {
   'mini-react': {
     title: 'React Fundamentals',
     description: 'Build modern UIs with React',
+    path: '/courses/mini-react',
     modules: [
       {
         id: 'mini-react-module-1',
@@ -56,6 +58,7 @@ const MOCK_MINI_COURSES = {
   'mini-testing': {
     title: 'Testing Essentials',
     description: 'Master unit testing and test-driven development',
+    path: '/courses/mini-testing',
     modules: [
       {
         id: 'mini-testing-module-1',
@@ -209,6 +212,20 @@ export default function MiniCourses() {
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* View Course Button */}
+                  <div className="mt-6">
+                    <Link
+                      to={course.path}
+                      className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium ${
+                        theme === 'dark'
+                          ? 'bg-indigo-600 text-white hover:bg-indigo-500'
+                          : theme === 'neurodivergent'
+                          ? 'bg-teal-600 text-white hover:bg-teal-500'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700' }`}>
+                      View Course Details →
+                    </Link>
                   </div>
                 </div>
               </BaseCard>
