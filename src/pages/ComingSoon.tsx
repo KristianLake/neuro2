@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { PageLayout } from '../components/layouts';
+import { useState } from 'react';
+import { themeConfig } from '../config/theme';
 
 const BETA_ACCESS_CODE = 'accessbeta';
 
@@ -162,4 +164,6 @@ export default function ComingSoon() {
       }`}>
         {/* Footer content */}
       </footer>
-    </PageLayout>
+        </PageLayout>
+      );
+    }

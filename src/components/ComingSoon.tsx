@@ -20,7 +20,7 @@ export default function ComingSoon() {
       if (password === BETA_PASSWORD) {
         // Store beta access in session storage
         sessionStorage.setItem('betaAccess', 'true');
-        navigate('/');
+        navigate(0);
       } else {
         setError('Invalid beta access code');
       }
