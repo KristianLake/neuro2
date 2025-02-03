@@ -19,7 +19,8 @@ export default function Course() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
-
+  const { pathname } = useLocation();
+  
   useEffect(() => {
     const fetchCourse = async () => { 
       if (!courseId) return;
@@ -91,7 +92,7 @@ export default function Course() {
 
   const handlePurchaseClick = () => {
     if (!user) {
-      navigate('/auth/login', { state: { from: location.pathname } });
+      navigate('/auth/login', { state: { from: pathname } });
       return;
     }
 

@@ -20,18 +20,17 @@ export default function Purchase() {
   const { courseId } = useParams<{ courseId: string }>();
   const { theme } = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { pathname } = useLocation(); // use pathname only
   const { user } = useAuth();
 
-  // Determine course type from URL path
-  const isFullCourse = location.pathname.startsWith('/purchase/course/');
-  const isMasterclass = location.pathname.startsWith('/purchase/master/');
-  const isMiniCourse = location.pathname.startsWith('/purchase/mini/');
-
   const [selectedPlan, setSelectedPlan] = useState<'standard' | 'premium'>('standard');
+  const isFullCourse = pathname.startsWith('/purchase/course/');
+  const isMasterclass = pathname.startsWith('/purchase/master/');
+  const isMiniCourse = pathname.startsWith('/purchase/mini/');
   const fullCourse = isFullCourse ? PRICING.fullProgram[selectedPlan] : null;
   const [paymentOption, setPaymentOption] = useState<PaymentOption>('full');
 
+  // Always call the hook unconditionally.
   const {
     state,
     loading,
@@ -39,15 +38,25 @@ export default function Purchase() {
     closePaymentModal,
     ownsStandardCourse,
     isUpgrade
-  } = usePurchaseFlow({ courseId, selectedPlan });
+  } = usePurchaseFlow({ moduleId: courseId, selectedPlan });
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated.
   useEffect(() => {
     if (!user) {
-      navigate('/auth/login', { state: { from: location.pathname } });
+      navigate('/auth/login', { state: { from: pathname } });
     }
-  }, [user, navigate, location]);
+  }, [user, navigate, pathname]);
 
+  // If no courseId is provided, render an error message.
+  if (!courseId) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <ErrorDisplay type="error" message="No course selected." />
+      </div>
+    );
+  }
+
+  // Show a spinner if the purchase flow isn’t ready.
   if (!state.showContent) {
     return <LoadingSpinner />;
   }
@@ -55,7 +64,6 @@ export default function Purchase() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-3xl mx-auto">
-        {/* Error/Status Messages */}
         {ownsStandardCourse && (
           <ErrorDisplay
             type="owned"
@@ -68,8 +76,6 @@ export default function Purchase() {
             message={state.loadingError}
           />
         )}
-
-        {/* Main Purchase Card */}
         <div className={`rounded-lg shadow-lg overflow-hidden ${
           theme === 'dark'
             ? 'bg-gray-800'
@@ -84,9 +90,7 @@ export default function Purchase() {
             courseId={courseId}
             fullCourse={fullCourse}
           />
-
           <div className="p-6">
-            {/* Plan Selection */}
             {isFullCourse && (
               <PlanSelection
                 selectedPlan={selectedPlan}
@@ -96,32 +100,24 @@ export default function Purchase() {
                 ownsStandardCourse={ownsStandardCourse}
               />
             )}
-
-            {/* Price Display */}
             <PriceDisplay
               isUpgrade={isUpgrade}
               price={state.purchaseCheck?.finalPrice || (isFullCourse ? fullCourse?.price : 0)}
               purchaseCheck={state.purchaseCheck}
               premiumFeatures={PRICING.fullProgram.premium.features}
             />
-            
-            {/* Payment Options */}
             {isFullCourse && (
               <PaymentOptions
                 selectedOption={paymentOption}
                 onSelectOption={setPaymentOption}
               />
             )}
-
-            {/* Purchase Button */}
             <PurchaseButton
               loading={loading}
               disabled={!state.purchaseCheck?.allowed}
               isUpgrade={isUpgrade}
               onClick={handlePurchase}
             />
-
-            {/* Purchase Error */}
             {state.purchaseError && (
               <ErrorDisplay
                 type="purchase"
@@ -131,8 +127,6 @@ export default function Purchase() {
           </div>
         </div>
       </div>
-
-      {/* Payment Modal */}
       <PaymentModal
         show={state.showPaymentModal}
         status={state.paymentStatus}

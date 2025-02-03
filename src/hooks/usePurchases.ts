@@ -1,8 +1,7 @@
+import { useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Purchase, Product, PurchaseWithProduct } from '../types/purchase';
-import { useCallback } from 'react';
-
 import { useApi } from './useApi';
 import { rateLimit } from '../middleware/rateLimit';
 
@@ -10,9 +9,9 @@ export function usePurchases() {
   const { user } = useAuth();
   const { api } = useApi();
 
+  // Fetch list of products with caching headers.
   const getProducts = async (): Promise<Product[]> => {
     try {
-      // Add caching headers
       return await api<Product[]>('products', {
         headers: {
           'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
@@ -24,6 +23,7 @@ export function usePurchases() {
     }
   };
 
+  // Fetch a single product by its ID.
   const getProduct = async (productId: string): Promise<Product | null> => {
     try {
       const { data, error } = await supabase
@@ -40,10 +40,11 @@ export function usePurchases() {
     }
   };
 
+  // Fetch purchases for the user (with related product info).
   const getUserPurchases = useCallback(async (): Promise<PurchaseWithProduct[]> => {
     if (!user) return [];
 
-    // Rate limit check
+    // Check rate limits
     const { success, error } = await rateLimit('api')(user.id);
     if (!success) {
       throw new Error(error);
@@ -68,7 +69,7 @@ export function usePurchases() {
 
       if (accessError) throw accessError;
 
-      // Transform the data to match PurchaseWithProduct type
+      // Transform data to match PurchaseWithProduct type.
       const purchasesWithAccess = (purchases || []).map(purchase => ({
         ...purchase,
         products: purchase.products,
@@ -86,7 +87,12 @@ export function usePurchases() {
     }
   }, [user]);
 
-  const createPurchase = async (productId: string, amount: number, paymentMethod: string): Promise<Purchase | null> => {
+  // Create a new purchase record.
+  const createPurchase = async (
+    productId: string,
+    amount: number,
+    paymentMethod: string
+  ): Promise<Purchase | null> => {
     if (!user) return null;
 
     console.log('Creating purchase record:', { productId, amount, paymentMethod });
@@ -94,13 +100,15 @@ export function usePurchases() {
     try {
       const { data, error } = await supabase
         .from('purchases')
-        .insert([{
-          user_id: user.id,
-          product_id: productId,
-          amount,
-          status: 'pending',
-          payment_method: paymentMethod
-        }])
+        .insert([
+          {
+            user_id: user.id,
+            product_id: productId,
+            amount,
+            status: 'pending',
+            payment_method: paymentMethod
+          }
+        ])
         .select()
         .single();
 
@@ -117,7 +125,11 @@ export function usePurchases() {
     }
   };
 
-  const updatePurchaseStatus = async (purchaseId: string, status: Purchase['status']): Promise<boolean> => {
+  // Update the purchase status with retries and timeouts.
+  const updatePurchaseStatus = async (
+    purchaseId: string,
+    status: Purchase['status']
+  ): Promise<boolean> => {
     if (!user) return false;
 
     const MAX_VERIFICATION_ATTEMPTS = 3;
@@ -134,7 +146,7 @@ export function usePurchases() {
 
       console.log('Starting purchase status update:', { purchaseId, status, userId: user.id });
 
-      // Helper function for retrying network requests
+      // Helper function to retry network requests.
       const retryNetworkRequest = async <T>(
         operation: () => Promise<T>,
         retries = MAX_NETWORK_RETRIES
@@ -154,7 +166,7 @@ export function usePurchases() {
         throw lastError;
       };
 
-      // Verify purchase with retries
+      // Verify purchase exists.
       const { data: purchase, error: verifyError } = await retryNetworkRequest(async () => {
         const result = await Promise.race<any>([
           supabase
@@ -178,13 +190,13 @@ export function usePurchases() {
         targetStatus: status
       });
 
-      // Don't update if already in target state
+      // If already in the target state, no update is needed.
       if (purchase.status === status) {
         console.log('Purchase already in target state:', status);
         return true;
       }
 
-      // Update with transaction timeout
+      // Update purchase status.
       const { error: updateError } = await retryNetworkRequest(async () => {
         const result = await Promise.race([
           supabase
@@ -204,16 +216,14 @@ export function usePurchases() {
         throw updateError;
       }
 
-      // Verify the update with retries
+      // Verify the update with multiple attempts.
       for (let attempt = 1; attempt <= MAX_VERIFICATION_ATTEMPTS; attempt++) {
         const startTime = Date.now();
         console.log(`Starting verification attempt ${attempt} of ${MAX_VERIFICATION_ATTEMPTS}`);
 
-        // Add increasing delay between verification attempts
         const backoffDelay = Math.min(VERIFICATION_DELAY * Math.pow(2, attempt - 1), 5000);
         await new Promise(resolve => setTimeout(resolve, backoffDelay));
 
-        // Race between verification and timeout
         try {
           const { data: verifiedUpdate, error: verifyUpdateError } = await retryNetworkRequest(async () => {
             const result = await Promise.race<any>([
@@ -265,7 +275,6 @@ export function usePurchases() {
             actual: verifiedUpdate.status
           });
 
-          // On last attempt, try one final update
           if (attempt === MAX_VERIFICATION_ATTEMPTS) {
             try {
               console.log('Making final update attempt');
@@ -315,7 +324,8 @@ export function usePurchases() {
     }
   };
 
-  const canPurchaseProduct = async (productId: string): Promise<{
+  // Memoize the RPC call to check if a user can purchase a product.
+  const canPurchaseProduct = useCallback(async (productId: string): Promise<{
     allowed: boolean;
     reason?: string;
     originalPrice: number;
@@ -323,24 +333,40 @@ export function usePurchases() {
     discount: number;
     ownedModules: string[];
   }> => {
-    if (!user) return {
-      allowed: false,
-      reason: 'not_authenticated',
-      originalPrice: 0,
-      finalPrice: 0,
-      discount: 0,
-      ownedModules: []
-    };
-
+    if (!productId) {
+      throw new Error('productId is required');
+    }
+  
+    if (!user) {
+      return {
+        allowed: false,
+        reason: 'not_authenticated',
+        originalPrice: 0,
+        finalPrice: 0,
+        discount: 0,
+        ownedModules: []
+      };
+    }
+  
     try {
-      const { data, error } = await supabase
-        .rpc('can_purchase_product', {
-          p_user_id: user.id,
-          p_product_id: productId
-        });
-
+      console.log(`passing ${user.id} and ${productId}`);
+      const { data, error } = await supabase.rpc('can_purchase_product', {
+        p_user_id: user.id,
+        p_product_id: productId
+      });
+    
       if (error) throw error;
-
+      
+      if (!data) {
+        return {
+          allowed: true,
+          originalPrice: 0,
+          finalPrice: 0,
+          discount: 0,
+          ownedModules: []
+        };
+      }
+      
       return {
         allowed: data.allowed,
         reason: data.reason,
@@ -353,7 +379,7 @@ export function usePurchases() {
       console.error('Error checking purchase eligibility:', error);
       throw error;
     }
-  };
+  }, [user]);
 
   return {
     getProducts,

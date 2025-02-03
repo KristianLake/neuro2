@@ -2,144 +2,118 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { usePurchases } from '../../../hooks/usePurchases';
 import { usePayment } from '../../../hooks/usePayment';
-import { PurchaseCheck } from '../types/plans';
 import { PaymentStatus } from '../types/payments';
-
-interface UsePurchaseFlowProps {
-  moduleId: string | undefined;
-  selectedPlan: 'standard' | 'premium';
-}
 
 interface PurchaseFlowState {
   checkingPurchase: boolean;
-  hasCheckedPurchase: boolean;
-  showContent: boolean;
+  purchaseCheck: {
+    allowed: boolean;
+    reason?: string;
+    originalPrice: number;
+    finalPrice: number;
+    discount: number;
+    ownedModules: string[];
+  } | null;
   loadingError: string | null;
   purchaseError: string | null;
-  purchaseCheck: PurchaseCheck | null;
-  paymentStatus: PaymentStatus;
+  paymentStatus: PaymentStatus | null;
   showPaymentModal: boolean;
+  showContent: boolean;
 }
 
-export function usePurchaseFlow({ moduleId, selectedPlan }: UsePurchaseFlowProps) {
+interface UsePurchaseFlowProps {
+  moduleId: string | undefined;
+}
+
+export function usePurchaseFlow({ moduleId }: UsePurchaseFlowProps) {
   const { user } = useAuth();
   const { canPurchaseProduct } = usePurchases();
   const { loading, processPurchase } = usePayment();
   const [state, setState] = useState<PurchaseFlowState>({
-    checkingPurchase: true,
-    hasCheckedPurchase: false,
-    showContent: false,
+    checkingPurchase: false,
+    purchaseCheck: null,
     loadingError: null,
     purchaseError: null,
-    purchaseCheck: null,
     paymentStatus: null,
-    showPaymentModal: false
+    showPaymentModal: false,
+    showContent: false,
   });
 
-  const isFullCourse = moduleId === 'full-course';
-
   useEffect(() => {
-    const checkPurchaseEligibility = async () => {
-      if (!user) return;
+    // Only run if both the user and moduleId exist.
+    if (!user || !moduleId) return;
+
+    const checkEligibility = async () => {
+      setState(prev => ({
+        ...prev,
+        checkingPurchase: true,
+        loadingError: null,
+        purchaseError: null,
+        showContent: false,
+      }));
+
       try {
-        setState(s => ({
-          ...s,
-          loadingError: null,
-          purchaseError: null,
-          checkingPurchase: true
-        }));
-        
-        // First check if user owns standard course
-        const standardCheck = await canPurchaseProduct('full-course');
-        const ownsStandard = standardCheck.reason === 'already_owned';
-
-        // If checking full course and user owns standard, check premium upgrade
-        if (isFullCourse && ownsStandard) {
-          const premiumCheck = await canPurchaseProduct('full-course-premium');
-          setState(s => ({
-            ...s,
-            purchaseCheck: premiumCheck,
-            hasCheckedPurchase: true
-          }));
-          return;
-        }
-
-        // Otherwise check the requested product
-        const productId = isFullCourse ? 'full-course' : moduleId;
-
-        const result = await canPurchaseProduct(productId);
-        
-        setState(s => ({
-          ...s,
+        // Call the database function via RPC using the passed moduleId.
+        const result = await canPurchaseProduct(moduleId);
+        setState(prev => ({
+          ...prev,
           purchaseCheck: result,
-          hasCheckedPurchase: true
+          showContent: true,
         }));
       } catch (error) {
         console.error('Error checking purchase eligibility:', error);
-        setState(s => ({
-          ...s,
+        setState(prev => ({
+          ...prev,
           purchaseError: 'Unable to check purchase eligibility. Please try again.',
-          loadingError: 'Unable to load purchase information. Please try again.'
+          loadingError: 'Unable to load purchase information. Please try again.',
         }));
       } finally {
-        setState(s => ({
-          ...s,
-          checkingPurchase: false
+        setState(prev => ({
+          ...prev,
+          checkingPurchase: false,
         }));
       }
     };
 
-    checkPurchaseEligibility();
-  }, [user, moduleId, isFullCourse, selectedPlan]);
-
-  useEffect(() => {
-    if (!state.checkingPurchase && !state.loadingError && state.hasCheckedPurchase) {
-      setState(s => ({ ...s, showContent: true }));
-    }
-  }, [state.checkingPurchase, state.loadingError, state.hasCheckedPurchase]);
+    checkEligibility();
+  }, [user, moduleId, canPurchaseProduct]);
 
   const handlePurchase = async () => {
     if (!state.purchaseCheck?.allowed) return;
 
-    setState(s => ({
-      ...s,
+    setState(prev => ({
+      ...prev,
       showPaymentModal: true,
-      purchaseError: null
+      purchaseError: null,
     }));
 
-    const productId = isFullCourse 
-      ? selectedPlan === 'premium' && state.purchaseCheck?.reason === 'upgrade'
-        ? 'full-course-premium'
-        : 'full-course'
-      : moduleId;
-
     try {
+      // Use moduleId as the product ID and the final price from the purchase check.
       const result = await processPurchase(
-        productId,
+        moduleId,
         state.purchaseCheck.finalPrice
       );
 
-      setState(s => ({
-        ...s,
+      setState(prev => ({
+        ...prev,
         paymentStatus: result.success ? 'success' : 'failure',
-        purchaseError: result.success ? null : (result.error || 'Payment failed. Please try again.')
+        purchaseError: result.success ? null : (result.error || 'Payment failed. Please try again.'),
       }));
-
     } catch (error) {
       console.error('Purchase failed:', error);
-      setState(s => ({
-        ...s,
+      setState(prev => ({
+        ...prev,
         paymentStatus: 'failure',
-        purchaseError: error instanceof Error ? error.message : 'An unexpected error occurred'
+        purchaseError: error instanceof Error ? error.message : 'An unexpected error occurred',
       }));
     }
   };
 
   const closePaymentModal = () => {
-    setState(s => ({
-      ...s,
+    setState(prev => ({
+      ...prev,
       showPaymentModal: false,
-      paymentStatus: null
+      paymentStatus: null,
     }));
   };
 
@@ -148,9 +122,5 @@ export function usePurchaseFlow({ moduleId, selectedPlan }: UsePurchaseFlowProps
     loading,
     handlePurchase,
     closePaymentModal,
-    ownsStandardCourse: state.purchaseCheck?.reason === 'already_owned' && 
-      isFullCourse && selectedPlan === 'standard',
-    isUpgrade: state.purchaseCheck?.reason === 'upgrade' && 
-      isFullCourse && selectedPlan === 'premium'
   };
 }
